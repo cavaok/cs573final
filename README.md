@@ -1,0 +1,1 @@
+Currently learning how to create a series of interactive visualizations using Claude. This is a work in progress and is more for me to learn how the different files interact and are hosted via github pages. I have not included any of my own original work in this yet.
