@@ -1,5 +1,5 @@
 /* Minimal styling inspired by Severance and Obra Dinn */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap');
 
 * {
     margin: 0;
@@ -27,10 +27,15 @@ header {
     border-bottom: 1px solid #ffffff;
 }
 
+/* Apply Space Grotesk to headers */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500; /* makes it bolder */
+    letter-spacing: 0.6px;
+}
+
 h1 {
-    font-weight: 700; /* makes it bolder */
     font-size: 36px;  /* makes it bigger */
-    letter-spacing: 0.5px;
     text-align: center;
 }
 
