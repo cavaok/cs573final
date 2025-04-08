@@ -40,15 +40,16 @@ h1 {
 }
 
 .help-button {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     border: 1px solid #ffffff;
+    background-color: #ffffff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: #ffffff;
+    color: #000000;
     font-size: 18px;
 }
 
@@ -61,5 +62,5 @@ main {
     height: 70vh;
     border: 1px solid #ffffff;
     background-color: #000000; /* Set the background to black */
-    box-shadow: 0 4px 6px rgba(255, 255, 255, 0.3);
+    box-shadow: 8px 8px 8px rgba(255, 255, 255, 0.3);
 }
