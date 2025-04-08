@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Adversarial Examples PCA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .back-button {
+            text-decoration: none;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            padding: 5px 10px;
+            margin-right: 20px;
+        }
+        
+        section {
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <a href="index.html" class="back-button">←</a>
+            <h1>About This Visualization</h1>
+        </div>
+    </header>
+
+    <main>
+        <section>
+            <h2>Project Overview</h2>
+            <p>This visualization explores adversarial examples in neural networks from a dynamical systems perspective.</p>
+            <p>Adversarial examples are inputs with small, intentional perturbations that cause machine learning models to make incorrect predictions.</p>
+        </section>
+
+        <section>
+            <h2>PCA Visualization</h2>
+            <p>The main visualization uses Principal Component Analysis (PCA) to project high-dimensional image data into a two-dimensional space.</p>
+            <p>Original images appear as colored circles, while their adversarial counterparts appear as different markers connected by lines.</p>
+        </section>
+
+        <section>
+            <h2>How to Use</h2>
+            <p>Hover over any point to see the corresponding image.</p>
+            <p>Use the iteration controls to see how adversarial examples change across model iterations.</p>
+            <p>The comparison window shows original and adversarial versions side by side.</p>
+        </section>
+
+        <section>
+            <h2>Research Context</h2>
+            <p>This visualization is based on research investigating whether adversarial vulnerability is a universal property of neural networks or can be mitigated through architectural choices.</p>
+            <p>The visualization demonstrates how different model architectures and iteration counts affect the distribution of adversarial examples in feature space.</p>
+        </section>
+    </main>
+</body>
+</html>
