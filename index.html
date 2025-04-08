@@ -3,66 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Visualization Project</title>
+    <title>Adversarial Examples PCA</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Data Exploration & Visualization</h1>
-        <nav>
-            <ul>
-                <li><a href="#" class="active" data-page="home">Home</a></li>
-                <li><a href="#" data-page="info">Dataset Info</a></li>
-                <li><a href="#" data-page="analytics">Analytics</a></li>
-                <li><a href="#" data-page="exploration">Exploration</a></li>
-            </ul>
-        </nav>
+        <h1>Adversarial Examples PCA</h1>
+        <a href="info.html" class="help-button">?</a>
     </header>
 
     <main>
-        <!-- Content sections that will be shown/hidden -->
-        <section id="home" class="page active">
-            <h2>Welcome to My Data Visualization Project</h2>
-            <p>This project demonstrates interactive data visualizations using Altair and data from Supabase.</p>
-            <p>Click on the tabs above to explore different sections.</p>
-        </section>
-
-        <section id="info" class="page">
-            <h2>Dataset Information</h2>
-            <p>This section will contain interactive descriptions of the dataset.</p>
-            <!-- Your info content will go here -->
-            <div id="info-visualization"></div>
-        </section>
-
-        <section id="analytics" class="page">
-            <h2>Analytics Dashboard</h2>
-            <p>Interactive visualizations with filtering capabilities.</p>
-            <!-- Your analytics visualizations will go here -->
-            <div id="analytics-visualization"></div>
-        </section>
-
-        <section id="exploration" class="page">
-            <h2>Experimental Visualizations</h2>
-            <p>More creative and experimental ways to visualize the data.</p>
-            <!-- Your experimental visualizations will go here -->
-            <div id="exploration-visualization"></div>
-        </section>
+        <div id="visualization-container">
+            <!-- Your PCA visualization will go here -->
+        </div>
     </main>
 
-    <footer>
-        <p>© 2025 Your Name - GitHub Pages Project</p>
-    </footer>
-
-    <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Your custom JavaScript -->
     <script src="scripts.js"></script>
 </body>
 </html>
