@@ -17,9 +17,10 @@
             font-family: 'IBM Plex Mono', monospace;
         }
 
-        /* Apply Space Grotesk to header elements */
-        h1, h2 {
+        h1 {
             font-family: 'Space Grotesk', sans-serif;
+            margin: 0;
+            text-align: right;
         }
 
         .back-button {
@@ -28,9 +29,10 @@
             color: #000000;
             border: none;
             padding: 5px 10px;
-            margin-left: 0; /* Remove previous left margin */
-            display: flex;
-            align-items: center; /* Vertically center the arrow */
+            margin-left: 0;
+            font-size: 24px; /* Adjust size of the arrow */
+            line-height: 1;
+            display: inline-block;
         }
         
         section {
@@ -38,6 +40,7 @@
         }
         
         h2 {
+        font-family: 'Space Grotesk', sans-serif;
             margin-top: 20px;
             margin-bottom: 15px;
             font-weight: 400;
