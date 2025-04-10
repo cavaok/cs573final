@@ -15,15 +15,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to initialize the main PCA visualization
 function initMainVisualization() {
-    console.log('Initializing PCA visualization with D3');
+    console.log('Initializing 3D PCA visualization with Three.js');
     
     // Create model selector
     const container = document.getElementById('visualization-container');
     
     // Add model selector UI at the top of the container
     const selectorDiv = document.createElement('div');
-    selectorDiv.style.marginBottom = '10px';
-    selectorDiv.style.textAlign = 'center';
+    selectorDiv.style.position = 'absolute';
+    selectorDiv.style.top = '20px';
+    selectorDiv.style.left = '20px';
+    selectorDiv.style.zIndex = '10';
     
     const modelSelector = document.createElement('select');
     modelSelector.id = 'model-selector';
@@ -48,298 +50,604 @@ function initMainVisualization() {
     selectorLabel.style.color = '#fff';
     selectorLabel.style.marginRight = '10px';
     
+    // Add reset view button
+    const resetBtn = document.createElement('button');
+    resetBtn.id = 'reset-view';
+    resetBtn.textContent = 'Reset View';
+    resetBtn.style.marginLeft = '10px';
+    resetBtn.style.padding = '5px 10px';
+    resetBtn.style.backgroundColor = '#000';
+    resetBtn.style.color = '#fff';
+    resetBtn.style.border = '1px solid #fff';
+    resetBtn.style.cursor = 'pointer';
+    
     // Add elements to the container
     selectorDiv.appendChild(selectorLabel);
     selectorDiv.appendChild(modelSelector);
+    selectorDiv.appendChild(resetBtn);
     container.appendChild(selectorDiv);
     
-    // Create a div for the SVG
-    const svgContainer = document.createElement('div');
-    svgContainer.id = 'pca-svg-container';
-    svgContainer.style.width = '100%';
-    svgContainer.style.height = 'calc(100% - 40px)';
-    container.appendChild(svgContainer);
+    // Create legend
+    const legend = document.createElement('div');
+    legend.id = 'legend';
+    legend.style.position = 'absolute';
+    legend.style.top = '20px';
+    legend.style.right = '20px';
+    legend.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    legend.style.padding = '10px';
+    legend.style.border = '1px solid #fff';
+    legend.style.borderRadius = '5px';
+    legend.style.zIndex = '10';
+    
+    legend.innerHTML = `
+        <h3>LEGEND</h3>
+        <div class="legend-item">
+            <div class="legend-color" style="display: inline-block; width: 16px; height: 16px; background-color: #6baed6; margin-right: 5px;"></div>
+            <span>Label 0</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="display: inline-block; width: 16px; height: 16px; background-color: #fd8d3c; margin-right: 5px;"></div>
+            <span>Label 1</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-shape" style="display: inline-block; width: 16px; height: 16px; text-align: center; margin-right: 5px;">●</div>
+            <span>Original</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-shape" style="display: inline-block; width: 16px; height: 16px; text-align: center; margin-right: 5px;">✖</div>
+            <span>Adversarial</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line" style="display: inline-block; width: 16px; border-top: 2px dashed #fff; margin-right: 5px;"></div>
+            <span>Connected Pairs</span>
+        </div>
+    `;
+    
+    container.appendChild(legend);
+    
+    // Create stats area
+    const statsArea = document.createElement('div');
+    statsArea.id = 'stats-area';
+    statsArea.style.position = 'absolute';
+    statsArea.style.bottom = '20px';
+    statsArea.style.left = '20px';
+    statsArea.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    statsArea.style.padding = '10px';
+    statsArea.style.border = '1px solid #fff';
+    statsArea.style.borderRadius = '5px';
+    
+    statsArea.innerHTML = `
+        <h4>OVERALL STATS</h4>
+        <div id="stats-content">Loading...</div>
+    `;
+    
+    container.appendChild(statsArea);
+    
+    // Initialize the 3D visualization
+    const pca3D = new PCA3DVisualization(container);
+    
+    // Set up event listeners
+    modelSelector.addEventListener('change', function() {
+        pca3D.loadData(this.value);
+    });
+    
+    resetBtn.addEventListener('click', function() {
+        pca3D.resetView();
+    });
     
     // Load data for the initially selected model
-    loadAndDisplayData(models[0]);
-    
-    // Add event listener for model selection change
-    modelSelector.addEventListener('change', function() {
-        loadAndDisplayData(this.value);
-    });
+    pca3D.loadData(models[0]);
 }
 
-// Function to load and display data for a selected model
-async function loadAndDisplayData(modelName) {
-    // Get container dimensions
-    const container = document.getElementById('pca-svg-container');
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    
-    // Clear the previous visualization
-    d3.select('#pca-svg-container').html('');
-    
-    // Create SVG element
-    const svg = d3.select('#pca-svg-container')
-        .append('svg')
-        .attr('width', width)
-        .attr('height', height)
-        .style('background-color', '#000');
-    
-    // Add loading indicator
-    const loadingText = svg.append('text')
-        .attr('x', width / 2)
-        .attr('y', height / 2)
-        .attr('text-anchor', 'middle')
-        .attr('fill', '#fff')
-        .style('font-family', 'Space Grotesk, sans-serif')
-        .style('font-size', '18px')
-        .text('Loading data...');
-    
-    // Load the data for the selected model
-    const data = await loadPCAData(modelName);
-    
-    // Remove loading indicator
-    loadingText.remove();
-    
-    if (data.length === 0) {
-        // Show error message if no data
-        svg.append('text')
-            .attr('x', width / 2)
-            .attr('y', height / 2)
-            .attr('text-anchor', 'middle')
-            .attr('fill', '#fff')
-            .style('font-family', 'Space Grotesk, sans-serif')
-            .style('font-size', '18px')
-            .text('No data available or error loading data');
-        return;
+class PCA3DVisualization {
+    constructor(container) {
+        this.container = container;
+        this.width = container.clientWidth;
+        this.height = container.clientHeight;
+        this.data = [];
+        this.pairs = [];
+        
+        // Colors for labels (matching your existing implementation)
+        this.colors = {
+            0: 0x6baed6, // Blue
+            1: 0xfd8d3c  // Orange
+        };
+        
+        // Initialize Three.js components
+        this.initThree();
+        
+        // Set up raycasting for hover effects
+        this.setupRaycasting();
+        
+        // Start animation loop
+        this.animate();
+        
+        // Update axis labels
+        this.updateAxisLabels();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => this.onWindowResize());
     }
     
-    // Add a group for the visualization
-    const g = svg.append('g')
-        .attr('transform', `translate(${width / 2}, ${height / 2})`);
-    
-    // Add title with model name
-    svg.append('text')
-        .attr('x', 10)
-        .attr('y', 30)
-        .attr('fill', '#fff')
-        .style('font-family', 'Space Grotesk, sans-serif')
-        .style('font-size', '16px')
-        .text(`Model: ${modelName}`);
-    
-    // Create a key/legend
-    const legend = svg.append('g')
-        .attr('transform', `translate(${width - 150}, 30)`);
-    
-    legend.append('text')
-        .attr('x', 0)
-        .attr('y', 0)
-        .attr('fill', '#fff')
-        .style('font-family', 'Space Grotesk, sans-serif')
-        .style('font-size', '16px')
-        .text('KEY');
-    
-    // Original image legend item
-    legend.append('circle')
-        .attr('cx', 20)
-        .attr('cy', 25)
-        .attr('r', 6)
-        .attr('fill', '#fff');
-    
-    legend.append('text')
-        .attr('x', 35)
-        .attr('y', 30)
-        .attr('fill', '#fff')
-        .text('Original Image');
-    
-    // Adversarial example legend item
-    legend.append('path')
-        .attr('d', d3.symbol().type(d3.symbolCross).size(80))
-        .attr('transform', 'translate(20, 50)')
-        .attr('fill', '#fff');
-    
-    legend.append('text')
-        .attr('x', 35)
-        .attr('y', 55)
-        .attr('fill', '#fff')
-        .text('Adversarial Example');
-    
-    // Connecting line legend item
-    legend.append('line')
-        .attr('x1', 5)
-        .attr('y1', 75)
-        .attr('x2', 35)
-        .attr('y2', 75)
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 1)
-        .attr('stroke-dasharray', '3,3');
-    
-    legend.append('text')
-        .attr('x', 45)
-        .attr('y', 80)
-        .attr('fill', '#fff')
-        .text('Pairs');
-    
-    // Process the data to create pairs
-    const pairs = createPairs(data);
-    
-    // Set up scales for the 3D to 2D projection
-    const xScale = d3.scaleLinear()
-        .domain([d3.min(data, d => d.pc1), d3.max(data, d => d.pc1)])
-        .range([-width/3, width/3]);
-    
-    const yScale = d3.scaleLinear()
-        .domain([d3.min(data, d => d.pc2), d3.max(data, d => d.pc2)])
-        .range([height/3, -height/3]);
-    
-    // Color scale for different labels
-    const colorScale = d3.scaleOrdinal()
-        .domain([0, 1])
-        .range(['#6baed6', '#fd8d3c']);
-    
-    // Draw connection lines between original and adversarial pairs
-    g.selectAll('.pair-line')
-        .data(pairs)
-        .enter()
-        .append('line')
-        .attr('class', 'pair-line')
-        .attr('x1', d => xScale(d.original.pc1))
-        .attr('y1', d => yScale(d.original.pc2))
-        .attr('x2', d => xScale(d.adversarial.pc1))
-        .attr('y2', d => yScale(d.adversarial.pc2))
-        .attr('stroke', d => colorScale(d.original.label))
-        .attr('stroke-width', 1)
-        .attr('stroke-dasharray', '3,3')
-        .attr('opacity', 0.7);
-    
-    // Draw original points
-    g.selectAll('.original-point')
-        .data(data.filter(d => d.type === 'original'))
-        .enter()
-        .append('circle')
-        .attr('class', 'original-point')
-        .attr('cx', d => xScale(d.pc1))
-        .attr('cy', d => yScale(d.pc2))
-        .attr('r', 6)
-        .attr('fill', d => colorScale(d.label))
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 1)
-        .on('mouseover', function(event, d) {
-            d3.select(this)
-                .attr('r', 8)
-                .attr('stroke-width', 2);
-            
-            // Display info about this point
-            showPointInfo(svg, d, event.pageX, event.pageY);
-        })
-        .on('mouseout', function() {
-            d3.select(this)
-                .attr('r', 6)
-                .attr('stroke-width', 1);
-            
-            // Hide info
-            svg.select('.point-info').remove();
-        });
-    
-    // Draw adversarial points using a different symbol
-    g.selectAll('.adversarial-point')
-        .data(data.filter(d => d.type === 'adversarial'))
-        .enter()
-        .append('path')
-        .attr('class', 'adversarial-point')
-        .attr('d', d3.symbol().type(d3.symbolCross).size(80))
-        .attr('transform', d => `translate(${xScale(d.pc1)}, ${yScale(d.pc2)})`)
-        .attr('fill', d => colorScale(d.label))
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 1)
-        .on('mouseover', function(event, d) {
-            d3.select(this)
-                .attr('d', d3.symbol().type(d3.symbolCross).size(120))
-                .attr('stroke-width', 2);
-            
-            // Display info about this point
-            showPointInfo(svg, d, event.pageX, event.pageY);
-        })
-        .on('mouseout', function() {
-            d3.select(this)
-                .attr('d', d3.symbol().type(d3.symbolCross).size(80))
-                .attr('stroke-width', 1);
-            
-            // Hide info
-            svg.select('.point-info').remove();
-        });
-    
-    // Add stats display area
-    const statsArea = svg.append('g')
-        .attr('transform', `translate(20, ${height - 100})`);
-    
-    statsArea.append('rect')
-        .attr('width', 200)
-        .attr('height', 80)
-        .attr('fill', '#000')
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 1);
-    
-    statsArea.append('text')
-        .attr('x', 10)
-        .attr('y', 20)
-        .attr('fill', '#fff')
-        .style('font-family', 'Space Grotesk, sans-serif')
-        .text('OVERALL STATS');
-    
-    // Add comparison window area (placeholder)
-    const compareArea = svg.append('g')
-        .attr('transform', `translate(${width - 220}, ${height - 100})`);
-    
-    compareArea.append('rect')
-        .attr('width', 200)
-        .attr('height', 80)
-        .attr('fill', '#000')
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 1);
-    
-    compareArea.append('text')
-        .attr('x', 10)
-        .attr('y', 20)
-        .attr('fill', '#fff')
-        .style('font-family', 'Space Grotesk, sans-serif')
-        .text('COMPARE WINDOW');
-}
-
-// Function to load PCA data from JSON files in the data folder
-async function loadPCAData(modelName = 'auto64_1') {
-    try {
-        // Construct the file path based on the model name
-        const filePath = `data/${modelName}_pca.json`;
+    initThree() {
+        // Create scene
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x000000); // Match your black background
         
-        // Use fetch to load the JSON file
-        const response = await fetch(filePath);
+        // Create camera
+        this.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.1, 1000);
+        this.camera.position.set(30, 30, 30);
+        this.camera.lookAt(0, 0, 0);
         
-        // Check if the fetch was successful
-        if (!response.ok) {
-            throw new Error(`Failed to load data: ${response.status} ${response.statusText}`);
+        // Create renderer
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer.setSize(this.width, this.height);
+        this.container.appendChild(this.renderer.domElement);
+        
+        // Add orbit controls for rotation and zoom
+        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.25;
+        
+        // Add axes
+        this.addAxes();
+        
+        // Add lights
+        this.addLights();
+        
+        // Create object containers
+        this.pointsGroup = new THREE.Group(); // Container for data points
+        this.linesGroup = new THREE.Group(); // Container for connection lines
+        this.scene.add(this.pointsGroup);
+        this.scene.add(this.linesGroup);
+    }
+    
+    addAxes() {
+        // Create axes
+        const axesHelper = new THREE.AxesHelper(30);
+        
+        // Change colors to match your theme
+        axesHelper.setColors(
+            new THREE.Color(0xff5555), // X axis (PC1) - red
+            new THREE.Color(0x55ff55), // Y axis (PC2) - green
+            new THREE.Color(0x5555ff)  // Z axis (PC3) - blue
+        );
+        this.scene.add(axesHelper);
+        
+        // Add grid helper for reference
+        const gridHelper = new THREE.GridHelper(60, 20, 0x555555, 0x333333);
+        this.scene.add(gridHelper);
+    }
+    
+    addLights() {
+        // Add ambient light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        this.scene.add(ambientLight);
+        
+        // Add directional light
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 1, 1);
+        this.scene.add(directionalLight);
+    }
+    
+    setupRaycasting() {
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+        this.hoveredObject = null;
+        
+        // Add mouse move event listener
+        window.addEventListener('mousemove', (event) => {
+            // Calculate mouse position in normalized device coordinates
+            this.mouse.x = (event.clientX / this.width) * 2 - 1;
+            this.mouse.y = -(event.clientY / this.height) * 2 + 1;
+        });
+    }
+    
+    async loadData(modelName) {
+        // Clear previous visualization
+        this.clearVisualization();
+        
+        // Update loading state
+        document.getElementById('stats-content').textContent = 'Loading...';
+        
+        try {
+            // Load data from JSON file
+            const filePath = `data/${modelName}_pca.json`;
+            const response = await fetch(filePath);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to load data: ${response.status} ${response.statusText}`);
+            }
+            
+            this.data = await response.json();
+            console.log(`Loaded ${this.data.length} data points from ${filePath}`);
+            
+            // Process the data
+            this.processData();
+            
+            // Render the visualization
+            this.renderVisualization();
+            
+            // Update stats
+            this.updateStats();
+        } catch (error) {
+            console.error('Error loading data:', error);
+            
+            // Use fallback sample data
+            this.data = [
+                {"id": "93", "case_idx": 0, "model_name": "auto64_1", "type": "original", "pc1": 4.75, "pc2": -0.19, "pc3": 3.05, "label": 0, "prediction": 0, "kld": 0.0, "mse": 0.0, "frob": 0.0},
+                {"id": "93_adv", "case_idx": 0, "model_name": "auto64_1", "type": "adversarial", "pc1": 4.34, "pc2": 0.10, "pc3": 2.68, "label": 0, "prediction": 0, "kld": 0.02, "mse": 0.005, "frob": 2.11},
+                {"id": "138", "case_idx": 1, "model_name": "auto64_1", "type": "original", "pc1": 4.75, "pc2": -0.19, "pc3": 3.05, "label": 0, "prediction": 0, "kld": 0.0, "mse": 0.0, "frob": 0.0},
+                {"id": "138_adv", "case_idx": 1, "model_name": "auto64_1", "type": "adversarial", "pc1": 4.01, "pc2": -0.96, "pc3": 2.24, "label": 0, "prediction": 0, "kld": 0.06, "mse": 0.012, "frob": 3.17}
+            ];
+            
+            this.processData();
+            this.renderVisualization();
+            this.updateStats();
+            
+            document.getElementById('stats-content').textContent = 'Using fallback sample data due to loading error';
+        }
+    }
+    
+    processData() {
+        // Find min and max values for normalization
+        this.dataMinMax = {
+            pc1: { min: Infinity, max: -Infinity },
+            pc2: { min: Infinity, max: -Infinity },
+            pc3: { min: Infinity, max: -Infinity }
+        };
+        
+        this.data.forEach(d => {
+            this.dataMinMax.pc1.min = Math.min(this.dataMinMax.pc1.min, d.pc1);
+            this.dataMinMax.pc1.max = Math.max(this.dataMinMax.pc1.max, d.pc1);
+            this.dataMinMax.pc2.min = Math.min(this.dataMinMax.pc2.min, d.pc2);
+            this.dataMinMax.pc2.max = Math.max(this.dataMinMax.pc2.max, d.pc2);
+            this.dataMinMax.pc3.min = Math.min(this.dataMinMax.pc3.min, d.pc3);
+            this.dataMinMax.pc3.max = Math.max(this.dataMinMax.pc3.max, d.pc3);
+        });
+        
+        // Create pairs (original and adversarial examples)
+        this.pairs = [];
+        const originals = this.data.filter(d => d.type === 'original');
+        
+        originals.forEach(original => {
+            // Find the matching adversarial example
+            const adversarial = this.data.find(d => 
+                d.type === 'adversarial' && 
+                d.case_idx === original.case_idx &&
+                d.model_name === original.model_name
+            );
+            
+            if (adversarial) {
+                this.pairs.push({ original, adversarial });
+            }
+        });
+        
+        console.log(`Created ${this.pairs.length} original-adversarial pairs`);
+    }
+    
+    clearVisualization() {
+        // Remove all points
+        while (this.pointsGroup.children.length > 0) {
+            const object = this.pointsGroup.children[0];
+            if (object.geometry) object.geometry.dispose();
+            if (object.material) object.material.dispose();
+            this.pointsGroup.remove(object);
         }
         
-        // Parse the JSON response
-        const jsonData = await response.json();
-        console.log(`Loaded ${jsonData.length} data points from ${filePath}`);
+        // Remove all lines
+        while (this.linesGroup.children.length > 0) {
+            const line = this.linesGroup.children[0];
+            if (line.geometry) line.geometry.dispose();
+            if (line.material) line.material.dispose();
+            this.linesGroup.remove(line);
+        }
+    }
+    
+    renderVisualization() {
+        // Scale factor for better visualization
+        const scale = 20;
         
-        return jsonData;
-    } catch (error) {
-        console.error('Error loading PCA data:', error);
-        // Return sample data as fallback
-        console.log('Using fallback sample data');
-        return [
-            {"id": "93", "case_idx": 0, "model_name": "auto64_1", "type": "original", "pc1": 4.7532216349018785, "pc2": -0.19813814775625677, "pc3": 3.0581665774536675, "label": 0, "prediction": 0, "kld": 0.0, "mse": 0.0, "frob": 0.0},
-            {"id": "93_adv", "case_idx": 0, "model_name": "auto64_1", "type": "adversarial", "pc1": 4.348511479828073, "pc2": 0.1068211643920772, "pc3": 2.6833043391784464, "label": 0, "prediction": 0, "kld": 0.0200746059417725, "mse": 0.0056967865675687, "frob": 2.11335778236389},
-            {"id": "138", "case_idx": 1, "model_name": "auto64_1", "type": "original", "pc1": 4.7532216349018785, "pc2": -0.19813814775625677, "pc3": 3.0581665774536675, "label": 0, "prediction": 0, "kld": 0.0, "mse": 0.0, "frob": 0.0},
-            {"id": "138_adv", "case_idx": 1, "model_name": "auto64_1", "type": "adversarial", "pc1": 4.019374616213383, "pc2": -0.9692336053065028, "pc3": 2.242816109815959, "label": 0, "prediction": 0, "kld": 0.0677064657211304, "mse": 0.0128182275220752, "frob": 3.17009329795837}
-        ];
+        // Normalize a value between min and max to [-1, 1] * scale
+        const normalize = (val, min, max) => {
+            return ((val - min) / (max - min) * 2 - 1) * scale;
+        };
+        
+        // Draw connection lines between original and adversarial pairs
+        this.pairs.forEach(pair => {
+            const x1 = normalize(pair.original.pc1, this.dataMinMax.pc1.min, this.dataMinMax.pc1.max);
+            const y1 = normalize(pair.original.pc2, this.dataMinMax.pc2.min, this.dataMinMax.pc2.max);
+            const z1 = normalize(pair.original.pc3, this.dataMinMax.pc3.min, this.dataMinMax.pc3.max);
+            
+            const x2 = normalize(pair.adversarial.pc1, this.dataMinMax.pc1.min, this.dataMinMax.pc1.max);
+            const y2 = normalize(pair.adversarial.pc2, this.dataMinMax.pc2.min, this.dataMinMax.pc2.max);
+            const z2 = normalize(pair.adversarial.pc3, this.dataMinMax.pc3.min, this.dataMinMax.pc3.max);
+            
+            // Create line geometry
+            const lineGeometry = new THREE.BufferGeometry();
+            const linePositions = new Float32Array([
+                x1, y1, z1,
+                x2, y2, z2
+            ]);
+            lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+            
+            // Create line material with dashed effect
+            const lineMaterial = new THREE.LineDashedMaterial({
+                color: this.colors[pair.original.label],
+                dashSize: 1,
+                gapSize: 1,
+                opacity: 0.7,
+                transparent: true
+            });
+            
+            // Create line and add to group
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            line.computeLineDistances(); // Required for dashed lines
+            this.linesGroup.add(line);
+        });
+        
+        // Draw data points
+        this.data.forEach(d => {
+            const x = normalize(d.pc1, this.dataMinMax.pc1.min, this.dataMinMax.pc1.max);
+            const y = normalize(d.pc2, this.dataMinMax.pc2.min, this.dataMinMax.pc2.max);
+            const z = normalize(d.pc3, this.dataMinMax.pc3.min, this.dataMinMax.pc3.max);
+            
+            let object;
+            const color = this.colors[d.label];
+            
+            if (d.type === 'original') {
+                // Original points as spheres (circles in 3D)
+                const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+                const material = new THREE.MeshLambertMaterial({ color: color });
+                object = new THREE.Mesh(geometry, material);
+            } else {
+                // Adversarial points as crosses
+                const crossSize = 0.5;
+                object = new THREE.Group();
+                
+                // Create cross using lines
+                const lineMaterial = new THREE.LineBasicMaterial({ color: color });
+                
+                // Line 1: top-left to bottom-right
+                const line1Geometry = new THREE.BufferGeometry();
+                const line1Positions = new Float32Array([
+                    -crossSize, -crossSize, 0,
+                    crossSize, crossSize, 0
+                ]);
+                line1Geometry.setAttribute('position', new THREE.BufferAttribute(line1Positions, 3));
+                const line1 = new THREE.Line(line1Geometry, lineMaterial);
+                
+                // Line 2: top-right to bottom-left
+                const line2Geometry = new THREE.BufferGeometry();
+                const line2Positions = new Float32Array([
+                    crossSize, -crossSize, 0,
+                    -crossSize, crossSize, 0
+                ]);
+                line2Geometry.setAttribute('position', new THREE.BufferAttribute(line2Positions, 3));
+                const line2 = new THREE.Line(line2Geometry, lineMaterial);
+                
+                object.add(line1);
+                object.add(line2);
+            }
+            
+            // Position the object
+            object.position.set(x, y, z);
+            
+            // Store original data with the object for hover info
+            object.userData = d;
+            
+            // Add to scene
+            this.pointsGroup.add(object);
+        });
+    }
+    
+    updateStats() {
+        if (this.data.length === 0) return;
+        
+        // Calculate statistics
+        const originalCount = this.data.filter(d => d.type === 'original').length;
+        const adversarialCount = this.data.filter(d => d.type === 'adversarial').length;
+        const modelName = this.data[0].model_name;
+        
+        // Get average KLD and MSE for adversarial examples
+        const adversarials = this.data.filter(d => d.type === 'adversarial');
+        const avgKLD = adversarials.reduce((sum, d) => sum + d.kld, 0) / adversarials.length;
+        const avgMSE = adversarials.reduce((sum, d) => sum + d.mse, 0) / adversarials.length;
+        
+        // Update stats display
+        const statsContent = document.getElementById('stats-content');
+        statsContent.innerHTML = `
+            Model: ${modelName}<br>
+            Points: ${this.data.length} (${originalCount} original, ${adversarialCount} adversarial)<br>
+            Avg KLD: ${avgKLD.toFixed(4)}<br>
+            Avg MSE: ${avgMSE.toFixed(4)}
+        `;
+    }
+    
+    updateAxisLabels() {
+        // Position axis labels in the 3D space
+        const xLabel = document.getElementById('x-axis-label');
+        const yLabel = document.getElementById('y-axis-label');
+        const zLabel = document.getElementById('z-axis-label');
+        
+        const updateLabelsPosition = () => {
+            // Get the position in 3D space
+            const xPos = new THREE.Vector3(25, 0, 0);
+            const yPos = new THREE.Vector3(0, 25, 0);
+            const zPos = new THREE.Vector3(0, 0, 25);
+            
+            // Project 3D positions to screen coordinates
+            xPos.project(this.camera);
+            yPos.project(this.camera);
+            zPos.project(this.camera);
+            
+            // Convert to screen coordinates
+            const xScreenPos = {
+                x: (xPos.x * 0.5 + 0.5) * this.width,
+                y: (-(xPos.y * 0.5) + 0.5) * this.height
+            };
+            
+            const yScreenPos = {
+                x: (yPos.x * 0.5 + 0.5) * this.width,
+                y: (-(yPos.y * 0.5) + 0.5) * this.height
+            };
+            
+            const zScreenPos = {
+                x: (zPos.x * 0.5 + 0.5) * this.width,
+                y: (-(zPos.y * 0.5) + 0.5) * this.height
+            };
+            
+            // Update label positions
+            xLabel.style.left = `${xScreenPos.x}px`;
+            xLabel.style.top = `${xScreenPos.y}px`;
+            xLabel.textContent = 'PC1';
+            
+            yLabel.style.left = `${yScreenPos.x}px`;
+            yLabel.style.top = `${yScreenPos.y}px`;
+            yLabel.textContent = 'PC2';
+            
+            zLabel.style.left = `${zScreenPos.x}px`;
+            zLabel.style.top = `${zScreenPos.y}px`;
+            zLabel.textContent = 'PC3';
+        };
+        
+        // Call immediately
+        updateLabelsPosition();
+        
+        // Store to call during animation
+        this.updateLabelsPosition = updateLabelsPosition;
+    }
+    
+    animate() {
+        requestAnimationFrame(() => this.animate());
+        
+        // Update controls
+        this.controls.update();
+        
+        // Update raycasting for hover effects
+        this.updateRaycasting();
+        
+        // Update axis labels with camera movement
+        if (this.updateLabelsPosition) {
+            this.updateLabelsPosition();
+        }
+        
+        // Render scene
+        this.renderer.render(this.scene, this.camera);
+    }
+    
+    updateRaycasting() {
+        // Update the picking ray with the camera and mouse position
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        
+        // Calculate objects intersecting the ray
+        const intersects = this.raycaster.intersectObjects(this.pointsGroup.children, true);
+        
+        const infoPanel = document.getElementById('info-panel');
+        
+        // If we have intersections
+        if (intersects.length > 0) {
+            // Get the first intersected object that has userData
+            let intersectedObject = null;
+            
+            for (let i = 0; i < intersects.length; i++) {
+                // For group objects (crosses), check parent
+                let object = intersects[i].object;
+                if (!object.userData || !object.userData.id) {
+                    if (object.parent && object.parent.userData && object.parent.userData.id) {
+                        object = object.parent;
+                    } else {
+                        continue;
+                    }
+                }
+                
+                intersectedObject = object;
+                break;
+            }
+            
+            if (intersectedObject) {
+                const pointData = intersectedObject.userData;
+                
+                // If we hover a new object
+                if (this.hoveredObject !== intersectedObject) {
+                    // Reset previous hover effect
+                    if (this.hoveredObject) {
+                        this.resetHoverEffect(this.hoveredObject);
+                    }
+                    
+                    // Apply hover effect to new object
+                    this.applyHoverEffect(intersectedObject);
+                    
+                    // Update hover reference
+                    this.hoveredObject = intersectedObject;
+                    
+                    // Update info panel
+                    infoPanel.style.display = 'block';
+                    infoPanel.innerHTML = `
+                        <strong>ID:</strong> ${pointData.id}<br>
+                        <strong>Type:</strong> ${pointData.type}<br>
+                        <strong>Label:</strong> ${pointData.label}<br>
+                        <strong>Prediction:</strong> ${pointData.prediction}<br>
+                        <strong>PCA:</strong> [${pointData.pc1.toFixed(2)}, ${pointData.pc2.toFixed(2)}, ${pointData.pc3.toFixed(2)}]<br>
+                        ${pointData.type === 'adversarial' ? `<strong>KLD:</strong> ${pointData.kld.toFixed(4)}<br>` : ''}
+                        ${pointData.type === 'adversarial' ? `<strong>MSE:</strong> ${pointData.mse.toFixed(4)}<br>` : ''}
+                        ${pointData.type === 'adversarial' ? `<strong>Frob:</strong> ${pointData.frob.toFixed(4)}` : ''}
+                    `;
+                    
+                    // Position the info panel near the mouse
+                    infoPanel.style.left = `${Math.min(window.innerWidth - 220, event.clientX + 10)}px`;
+                    infoPanel.style.top = `${Math.min(window.innerHeight - 150, event.clientY + 10)}px`;
+                }
+            }
+        } else {
+            // Reset hover effect
+            if (this.hoveredObject) {
+                this.resetHoverEffect(this.hoveredObject);
+                this.hoveredObject = null;
+            }
+            
+            // Hide info panel
+            infoPanel.style.display = 'none';
+        }
+    }
+    
+    applyHoverEffect(object) {
+        if (object.userData.type === 'original') {
+            // Increase size for original (sphere)
+            object.scale.set(1.5, 1.5, 1.5);
+        } else {
+            // Increase size for adversarial (cross)
+            object.scale.set(1.5, 1.5, 1.5);
+        }
+    }
+    
+    resetHoverEffect(object) {
+        // Reset to original size
+        object.scale.set(1, 1, 1);
+    }
+    
+    onWindowResize() {
+        this.width = this.container.clientWidth;
+        this.height = this.container.clientHeight;
+        
+        this.camera.aspect = this.width / this.height;
+        this.camera.updateProjectionMatrix();
+        
+        this.renderer.setSize(this.width, this.height);
+    }
+    
+    resetView() {
+        // Reset camera to initial position
+        this.camera.position.set(30, 30, 30);
+        this.camera.lookAt(0, 0, 0);
+        
+        // Reset controls
+        this.controls.reset();
     }
 }
 
-// Function to create pairs of original and adversarial examples
+// This keeps our existing createPairs function but we don't need it anymore
+// as it's now handled inside the PCA3DVisualization class
 function createPairs(data) {
     const pairs = [];
     const originalPoints = data.filter(d => d.type === 'original');
@@ -360,50 +668,4 @@ function createPairs(data) {
     });
     
     return pairs;
-}
-
-// Function to show information about a point on hover
-function showPointInfo(svg, d, x, y) {
-    // Remove any existing info
-    svg.select('.point-info').remove();
-    
-    // Create info box
-    const info = svg.append('g')
-        .attr('class', 'point-info')
-        .attr('transform', `translate(${x - 100}, ${y - 120})`);
-    
-    info.append('rect')
-        .attr('width', 200)
-        .attr('height', 100)
-        .attr('fill', '#000')
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 1)
-        .attr('rx', 5)
-        .attr('ry', 5);
-    
-    info.append('text')
-        .attr('x', 10)
-        .attr('y', 20)
-        .attr('fill', '#fff')
-        .text(`ID: ${d.id}`);
-    
-    info.append('text')
-        .attr('x', 10)
-        .attr('y', 40)
-        .attr('fill', '#fff')
-        .text(`Type: ${d.type}`);
-    
-    info.append('text')
-        .attr('x', 10)
-        .attr('y', 60)
-        .attr('fill', '#fff')
-        .text(`Label: ${d.label}, Pred: ${d.prediction}`);
-    
-    if (d.type === 'adversarial') {
-        info.append('text')
-            .attr('x', 10)
-            .attr('y', 80)
-            .attr('fill', '#fff')
-            .text(`KLD: ${d.kld.toFixed(4)}, MSE: ${d.mse.toFixed(4)}`);
-    }
 }

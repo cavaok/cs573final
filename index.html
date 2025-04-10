@@ -11,15 +11,39 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
         }
 
         code, pre {
             font-family: 'IBM Plex Mono', monospace;
         }
 
-        /* Apply Space Grotesk to header elements */
         h1 {
             font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        #info-panel {
+            position: absolute;
+            display: none;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px;
+            border: 1px solid #fff;
+            border-radius: 5px;
+            z-index: 100;
+            min-width: 200px;
+        }
+        
+        .axis-label {
+            position: absolute;
+            font-size: 14px;
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -31,20 +55,18 @@
 
     <main>
         <div id="visualization-container">
-            <!-- Your PCA visualization will go here -->
+            <!-- 3D visualization will be placed here -->
+            <div id="info-panel"></div>
+            <div id="x-axis-label" class="axis-label">PC1</div>
+            <div id="y-axis-label" class="axis-label">PC2</div>
+            <div id="z-axis-label" class="axis-label">PC3</div>
         </div>
     </main>
 
-    <!-- Add these libraries before scripts.js -->
-    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- New libraries for PCA visualization -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.20.0/plotly.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
     
     <script src="scripts.js"></script>
 </body>
