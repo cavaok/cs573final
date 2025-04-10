@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize visualization
-    initVisualization();
+    // Check if we're on the main page or info page
+    const isMainPage = !window.location.href.includes('info.html');
+    
+    if (isMainPage) {
+        // Main page - Initialize visualization
+        initVisualization();
+    }
 });
 
 function initVisualization() {
@@ -17,8 +22,9 @@ function initVisualization() {
         modelSelector.appendChild(option);
     });
     
-    // Initialize the 3D visualization
-    const viz = new PCAVisualization(document.getElementById('visualization-container'));
+    // Initialize the 3D visualization with the container element
+    const vizContainer = document.getElementById('visualization-container');
+    const viz = new PCAVisualization(vizContainer);
     
     // Set up event listeners
     modelSelector.addEventListener('change', function() {
@@ -36,8 +42,9 @@ function initVisualization() {
 class PCAVisualization {
     constructor(container) {
         this.container = container;
-        this.width = window.innerWidth;
-        this.height = window.innerHeight - 50; // Account for header
+        this.width = container.clientWidth;
+        this.height = container.clientHeight;
+        this.data = [];
         
         // Initialize Three.js
         this.initThree();
@@ -55,7 +62,7 @@ class PCAVisualization {
     initThree() {
         // Create scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x000000);
+        this.scene.background = new THREE.Color(0x111111); // Match container background
         
         // Create camera
         this.camera = new THREE.PerspectiveCamera(60, this.width / this.height, 0.1, 1000);
@@ -73,7 +80,7 @@ class PCAVisualization {
         this.controls.dampingFactor = 0.25;
         
         // Add simple axes for reference
-        const axesHelper = new THREE.AxesHelper(20);
+        const axesHelper = new THREE.AxesHelper(15);
         this.scene.add(axesHelper);
         
         // Add lights
@@ -96,13 +103,34 @@ class PCAVisualization {
         this.mouse = new THREE.Vector2();
         this.hoveredObject = null;
         
-        window.addEventListener('mousemove', (event) => {
-            // Calculate mouse position in normalized device coordinates
-            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        // Get container position for calculating mouse coordinates
+        const containerRect = this.container.getBoundingClientRect();
+        
+        this.container.addEventListener('mousemove', (event) => {
+            // Calculate mouse position relative to the container
+            const x = event.clientX - containerRect.left;
+            const y = event.clientY - containerRect.top;
             
-            // Update raycasting for hover effects
+            // Convert to normalized device coordinates (-1 to +1)
+            this.mouse.x = (x / this.width) * 2 - 1;
+            this.mouse.y = -(y / this.height) * 2 + 1;
+            
+            // Update raycasting
             this.updateRaycasting(event);
+        });
+        
+        // Update container position on scroll
+        window.addEventListener('scroll', () => {
+            containerRect = this.container.getBoundingClientRect();
+        });
+        
+        // Clear hover when mouse leaves container
+        this.container.addEventListener('mouseleave', () => {
+            if (this.hoveredObject) {
+                this.hoveredObject.scale.set(1, 1, 1);
+                this.hoveredObject = null;
+            }
+            document.getElementById('info-panel').style.display = 'none';
         });
     }
     
@@ -120,6 +148,7 @@ class PCAVisualization {
             
             const data = await response.json();
             console.log(`Loaded ${data.length} points for ${modelName}`);
+            this.data = data;
             
             // Create pairs
             const pairs = this.createPairs(data);
@@ -141,6 +170,7 @@ class PCAVisualization {
                 {"id": "138_adv", "case_idx": 1, "model_name": "auto64_1", "type": "adversarial", "pc1": -2.1, "pc2": 1.2, "pc3": -1.3, "label": 1, "prediction": 1, "kld": 0.06, "mse": 0.012}
             ];
             
+            this.data = sampleData;
             const samplePairs = this.createPairs(sampleData);
             const sampleBounds = this.calculateBounds(sampleData);
             this.createVisualization(sampleData, samplePairs, sampleBounds);
@@ -209,7 +239,7 @@ class PCAVisualization {
     }
     
     createVisualization(data, pairs, bounds) {
-        const scale = 15; // Scale factor for visualization
+        const scale = 12; // Scale factor for visualization
         
         // Normalize function
         const normalize = (val, min, max) => {
@@ -234,7 +264,7 @@ class PCAVisualization {
             ]);
             lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
             
-            // Create line material - white line for all connections
+            // Create line material - gray line for all connections
             const lineMaterial = new THREE.LineBasicMaterial({
                 color: 0x888888,
                 opacity: 0.5,
@@ -256,7 +286,7 @@ class PCAVisualization {
             
             if (d.type === 'original') {
                 // Black spheres with white outline for originals
-                const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+                const geometry = new THREE.SphereGeometry(0.4, 16, 16);
                 const material = new THREE.MeshBasicMaterial({
                     color: 0x000000,
                     transparent: false
@@ -270,14 +300,14 @@ class PCAVisualization {
                     side: THREE.BackSide
                 });
                 const outlineMesh = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.55, 16, 16),
+                    new THREE.SphereGeometry(0.45, 16, 16),
                     outlineMaterial
                 );
                 object.add(outlineMesh);
                 
             } else {
                 // White semi-transparent spheres for adversarials
-                const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+                const geometry = new THREE.SphereGeometry(0.4, 16, 16);
                 const material = new THREE.MeshBasicMaterial({
                     color: 0xffffff,
                     transparent: true,
@@ -347,9 +377,10 @@ class PCAVisualization {
                         <div>Label: ${pointData.label}</div>
                     `;
                     
-                    // Position the info panel near the mouse
-                    infoPanel.style.left = `${event.clientX + 15}px`;
-                    infoPanel.style.top = `${event.clientY + 15}px`;
+                    // Calculate position relative to the container
+                    const containerRect = this.container.getBoundingClientRect();
+                    infoPanel.style.left = `${event.clientX - containerRect.left + 15}px`;
+                    infoPanel.style.top = `${event.clientY - containerRect.top + 15}px`;
                 }
             }
         } else {
@@ -375,18 +406,27 @@ class PCAVisualization {
     }
     
     onWindowResize() {
-        this.width = window.innerWidth;
-        this.height = window.innerHeight - 50;
+        // Get new container dimensions
+        this.width = this.container.clientWidth;
+        this.height = this.container.clientHeight;
         
+        // Update camera
         this.camera.aspect = this.width / this.height;
         this.camera.updateProjectionMatrix();
         
+        // Update renderer
         this.renderer.setSize(this.width, this.height);
+        
+        // Update container position for mouse calculations
+        this.containerRect = this.container.getBoundingClientRect();
     }
     
     resetView() {
+        // Reset camera position
         this.camera.position.set(20, 20, 20);
         this.camera.lookAt(0, 0, 0);
+        
+        // Reset controls
         this.controls.reset();
     }
 }

@@ -4,47 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adversarial Examples PCA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
+            font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
             background-color: #000;
             color: #fff;
-            font-family: 'Space Grotesk', sans-serif;
             overflow: hidden;
+        }
+
+        code, pre {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
         }
         
         header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 10px 20px;
             border-bottom: 1px solid #333;
         }
         
-        h1 {
-            margin: 0;
-            font-size: 24px;
+        .help-button {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            text-decoration: none;
+            font-weight: bold;
         }
         
         #visualization-container {
             position: relative;
-            width: 100vw;
-            height: calc(100vh - 50px);
-        }
-        
-        #controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-        }
-        
-        select, button {
-            background-color: #000;
-            color: #fff;
-            border: 1px solid #fff;
-            padding: 5px 10px;
-            margin-right: 10px;
-            font-family: 'Space Grotesk', sans-serif;
+            width: 1000px;
+            height: 700px;
+            margin: 40px auto;
+            background-color: #111;
+            border: 2px solid #fff;
+            border-radius: 12px;
+            overflow: hidden;
         }
         
         #info-panel {
@@ -56,26 +67,58 @@
             border: 1px solid #fff;
             border-radius: 5px;
             z-index: 100;
-            font-size: 14px;
+            min-width: 200px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+        
+        #model-selector {
+            padding: 5px;
+            background-color: #000;
+            color: #fff;
+            border: 1px solid #fff;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        #reset-view {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background-color: #000;
+            color: #fff;
+            border: 1px solid #fff;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
         }
     </style>
 </head>
 <body>
     <header>
         <h1>Adversarial Examples Across Iterations</h1>
+        <a href="info.html" class="help-button">?</a>
     </header>
 
-    <div id="visualization-container">
-        <div id="controls">
-            <select id="model-selector"></select>
-            <button id="reset-view">Reset View</button>
+    <main>
+        <div id="visualization-container">
+            <div id="controls">
+                <label for="model-selector">Select Model:</label>
+                <select id="model-selector"></select>
+                <button id="reset-view">Reset View</button>
+            </div>
+            <div id="info-panel"></div>
         </div>
-        <div id="info-panel"></div>
-    </div>
+    </main>
 
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+    
     <script src="scripts.js"></script>
 </body>
 </html>
