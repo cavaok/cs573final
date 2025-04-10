@@ -311,7 +311,7 @@ async function loadAndDisplayData(modelName) {
 async function loadPCAData(modelName = 'auto64_1') {
     try {
         // Construct the file path based on the model name
-        const filePath = `data/${modelName}.json`;
+        const filePath = `data/${modelName}_pca.json`;
         
         // Use fetch to load the JSON file
         const response = await fetch(filePath);
