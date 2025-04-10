@@ -185,7 +185,8 @@ class PCA3DVisualization {
         this.container.appendChild(this.renderer.domElement);
         
         // Add orbit controls for rotation and zoom
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.25;
         
