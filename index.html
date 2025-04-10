@@ -4,25 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adversarial Examples PCA</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
             background-color: #000;
             color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
             overflow: hidden;
         }
-
-        code, pre {
-            font-family: 'IBM Plex Mono', monospace;
+        
+        header {
+            padding: 10px 20px;
+            border-bottom: 1px solid #333;
         }
-
+        
         h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        #visualization-container {
+            position: relative;
+            width: 100vw;
+            height: calc(100vh - 50px);
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+        
+        select, button {
+            background-color: #000;
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 5px 10px;
+            margin-right: 10px;
             font-family: 'Space Grotesk', sans-serif;
         }
         
@@ -35,51 +56,26 @@
             border: 1px solid #fff;
             border-radius: 5px;
             z-index: 100;
-            min-width: 200px;
-        }
-
-        #visualization-container {
-            position: relative;
-            width: 1000px;
-            height: 700px;
-            margin: 40px auto;
-            background-color: #111; /* Optional: simulates the "white box" styling from your screenshot */
-            border: 2px solid #fff;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        
-        .axis-label {
-            position: absolute;
             font-size: 14px;
-            color: #fff;
-            font-family: 'Space Grotesk', sans-serif;
-            pointer-events: none;
         }
     </style>
 </head>
 <body>
     <header>
         <h1>Adversarial Examples Across Iterations</h1>
-        <a href="info.html" class="help-button">?</a>
     </header>
 
-    <main>
-        <div id="visualization-container">
-            <!-- 3D visualization will be placed here -->
-            <div id="info-panel"></div>
-            <div id="x-axis-label" class="axis-label">PC1</div>
-            <div id="y-axis-label" class="axis-label">PC2</div>
-            <div id="z-axis-label" class="axis-label">PC3</div>
+    <div id="visualization-container">
+        <div id="controls">
+            <select id="model-selector"></select>
+            <button id="reset-view">Reset View</button>
         </div>
-    </main>
+        <div id="info-panel"></div>
+    </div>
 
-    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
-    
     <script src="scripts.js"></script>
 </body>
 </html>
