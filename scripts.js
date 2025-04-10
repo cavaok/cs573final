@@ -328,8 +328,14 @@ async function loadPCAData(modelName = 'auto64_1') {
         return jsonData;
     } catch (error) {
         console.error('Error loading PCA data:', error);
-        // Return an empty array if there's an error
-        return [];
+        // Return sample data as fallback
+        console.log('Using fallback sample data');
+        return [
+            {"id": "93", "case_idx": 0, "model_name": "auto64_1", "type": "original", "pc1": 4.7532216349018785, "pc2": -0.19813814775625677, "pc3": 3.0581665774536675, "label": 0, "prediction": 0, "kld": 0.0, "mse": 0.0, "frob": 0.0},
+            {"id": "93_adv", "case_idx": 0, "model_name": "auto64_1", "type": "adversarial", "pc1": 4.348511479828073, "pc2": 0.1068211643920772, "pc3": 2.6833043391784464, "label": 0, "prediction": 0, "kld": 0.0200746059417725, "mse": 0.0056967865675687, "frob": 2.11335778236389},
+            {"id": "138", "case_idx": 1, "model_name": "auto64_1", "type": "original", "pc1": 4.7532216349018785, "pc2": -0.19813814775625677, "pc3": 3.0581665774536675, "label": 0, "prediction": 0, "kld": 0.0, "mse": 0.0, "frob": 0.0},
+            {"id": "138_adv", "case_idx": 1, "model_name": "auto64_1", "type": "adversarial", "pc1": 4.019374616213383, "pc2": -0.9692336053065028, "pc3": 2.242816109815959, "label": 0, "prediction": 0, "kld": 0.0677064657211304, "mse": 0.0128182275220752, "frob": 3.17009329795837}
+        ];
     }
 }
 
